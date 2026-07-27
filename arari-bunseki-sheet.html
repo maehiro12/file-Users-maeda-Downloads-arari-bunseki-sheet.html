@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>粗利分析シート</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@600;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Roboto+Mono:wght@500;600;700&display=swap');
+
+  :root{
+    --bg:          #EFFBF5;
+    --surface:     #FFFFFF;
+    --surface-2:   #F3FBF7;
+    --ink:         #133029;
+    --ink-soft:    #5E7A70;
+
+    --teal:        #0EAE7B;
+    --teal-dark:   #0B8D63;
+    --teal-tint:   #DFF9EC;
+    --teal-border: #A6EBCB;
+
+    --coral:       #FF7A50;
+    --coral-dark:  #E85F36;
+    --coral-tint:  #FFECE2;
+    --coral-border:#FFC7AE;
+
+    --amber:       #F5A623;
+
+    --border:      #D9F0E5;
+    --radius: 16px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(14,174,123,.10), transparent 45%),
+      radial-gradient(circle at 90% 15%, rgba(255,122,80,.10), transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .mono{ font-family:'Roboto Mono', monospace; font-variant-numeric: tabular-nums; }
+
+  .page{ max-width:480px; margin:0 auto; padding:22px 16px 48px; }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; margin-bottom:14px;
+    background:linear-gradient(120deg, var(--teal) 0%, #21C58F 55%, var(--coral) 130%);
+    border-radius:18px;
+    box-shadow:0 8px 20px -8px rgba(14,174,123,.45);
+  }
+  header .title-block h1{
+    font-family:'Zen Maru Gothic', sans-serif; font-weight:900; font-size:20px;
+    color:#fff; margin:0 0 2px; letter-spacing:.03em;
+  }
+  header .title-block p{
+    margin:0; font-size:10.5px; color:rgba(255,255,255,.85);
+    letter-spacing:.14em; font-weight:500;
+  }
+  #reset-btn{
+    border:1.5px solid rgba(255,255,255,.75); background:rgba(255,255,255,.12);
+    color:#fff; font-family:'Zen Kaku Gothic New', sans-serif; font-size:12px; font-weight:700;
+    padding:7px 12px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
+  #reset-btn:hover{ background:rgba(255,255,255,.25); }
+
+  /* ---------- mode tabs ---------- */
+  .mode-tabs{
+    display:flex; gap:5px;
+    background:var(--surface); border:1.5px solid var(--border); border-radius:999px;
+    padding:4px; margin-bottom:18px;
+    box-shadow:0 3px 10px -6px rgba(19,48,41,.2);
+  }
+  .mode-tab{
+    flex:1; border:none; background:transparent; padding:10px 0; border-radius:999px;
+    font-family:'Zen Maru Gothic', sans-serif; font-weight:700; font-size:13px;
+    color:var(--ink-soft); cursor:pointer; transition:background .2s, color .2s;
+  }
+  .mode-tab.active{
+    background:linear-gradient(120deg, var(--teal), #21C58F);
+    color:#fff; box-shadow:0 4px 10px -4px rgba(14,174,123,.55);
+  }
+
+  /* ---------- section card ---------- */
+  .sheet{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:0 6px 20px -12px rgba(19,48,41,.18); margin-bottom:18px; overflow:hidden;
+  }
+  .sheet-header{ display:flex; align-items:center; gap:10px; padding:14px 16px 12px; }
+  .sheet-header.tone-teal{ background:var(--teal-tint); border-bottom:1px solid var(--teal-border); }
+  .sheet-header.tone-coral{ background:var(--coral-tint); border-bottom:1px solid var(--coral-border); }
+  .sheet-header .idx{
+    font-family:'Roboto Mono', monospace; font-size:11px; font-weight:700; color:#fff;
+    border-radius:6px; padding:2px 7px;
+  }
+  .tone-teal .idx{ background:var(--teal); }
+  .tone-coral .idx{ background:var(--coral); }
+  .sheet-header h2{
+    margin:0; font-family:'Zen Maru Gothic', sans-serif; font-size:15px; font-weight:700; letter-spacing:.04em;
+  }
+  .sheet-body{ padding:6px 16px 16px; }
+
+  /* ---------- simple field row ---------- */
+  .field-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 0; border-bottom:1px solid var(--border);
+  }
+  .field-row:last-child{ border-bottom:none; }
+  .field-row .label{ font-size:13.5px; color:var(--ink); flex-shrink:0; }
+
+  .amount-field{
+    display:flex; align-items:center; gap:4px;
+    background:var(--surface-2); border:1.5px solid var(--border); border-radius:9px;
+    padding:0 8px; height:40px;
+  }
+  .amount-field input{
+    width:100%; min-width:0; border:none; outline:none; background:transparent; text-align:right;
+    font-family:'Roboto Mono', monospace; font-size:14.5px; color:var(--ink); padding:0 2px;
+  }
+  .amount-field .unit{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; }
+  .amount-field.wide{ width:118px; }
+  input:focus{ outline:none; }
+  .amount-field:focus-within{ border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,174,123,.14); }
+  input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input[type=number]{ -moz-appearance:textfield; }
+
+  /* ---------- multi rows ---------- */
+  .multi-block{ padding:10px 0 14px; border-bottom:1px solid var(--border); }
+  .multi-block:last-of-type{ border-bottom:none; }
+  .multi-block > .multi-title{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+  .multi-title-text{ display:flex; flex-direction:column; }
+  .multi-title .label{ font-size:13.5px; font-weight:700; }
+  .multi-title .formula-caption{ font-size:10.5px; color:var(--ink-soft); margin-top:1px; }
+  .multi-title .subtotal-total{ font-size:12px; color:var(--ink-soft); white-space:nowrap; }
+  .multi-title .subtotal-total .mono{ color:var(--ink); font-weight:700; }
+
+  .row-line{ border:1.5px solid var(--border); border-radius:12px; padding:9px 10px; margin-bottom:8px; background:var(--surface-2); }
+  .row-line.is-sv{ background:var(--teal-tint); border-color:var(--teal-border); }
+  .row-line.is-st{ background:var(--coral-tint); border-color:var(--coral-border); }
+
+  .row-inputs{ display:flex; align-items:center; gap:7px; }
+  .mult{ font-size:12px; color:var(--ink-soft); flex-shrink:0; }
+  .row-remove{
+    margin-left:auto; width:26px; height:26px; border-radius:50%;
+    border:1.5px solid var(--border); background:#fff; color:var(--ink-soft);
+    font-size:14px; line-height:1; cursor:pointer; flex-shrink:0;
+  }
+  .row-remove:disabled{ opacity:.35; cursor:default; }
+  .row-subtotal{ margin-top:6px; text-align:right; font-size:11.5px; color:var(--ink-soft); }
+  .row-subtotal .mono{ color:var(--ink); font-weight:700; font-size:12.5px; }
+
+  .add-row-btn{
+    display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:9px 0;
+    background:transparent; border:1.5px dashed var(--teal-border); border-radius:10px;
+    color:var(--teal-dark); font-family:'Zen Kaku Gothic New', sans-serif; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .add-row-btn.coral{ border-color:var(--coral-border); color:var(--coral-dark); }
+  .add-row-btn:hover{ background:rgba(0,0,0,.03); }
+
+  /* ---------- 交通費(×人数) single duo row ---------- */
+  .duo-row{ padding:11px 0; border-bottom:1px solid var(--border); }
+  .duo-row:last-child{ border-bottom:none; }
+  .duo-row .duo-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .duo-row .label{ font-size:13.5px; color:var(--ink); }
+  .duo-row .subtotal-total{ font-size:12px; color:var(--ink-soft); }
+  .duo-row .subtotal-total .mono{ color:var(--ink); font-weight:700; }
+  .duo-inputs{ display:flex; align-items:center; gap:7px; }
+  .amount-field.narrow2{ width:104px; }
+
+  /* ---------- 管理費 rate selector ---------- */
+  .rate-row{ padding:12px 0 14px; border-bottom:1px solid var(--border); }
+  .rate-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; }
+  .rate-top .label{ font-size:13.5px; color:var(--ink); }
+  .rate-chips{ display:flex; gap:7px; }
+  .rate-chip{
+    flex:1; padding:9px 0; text-align:center; border-radius:10px; border:1.5px solid var(--border);
+    background:var(--surface-2); color:var(--ink-soft);
+    font-family:'Roboto Mono', monospace; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .rate-chip.active{ background:var(--teal); border-color:var(--teal); color:#fff; }
+  .rate-note{ margin-top:9px; font-size:11px; color:var(--ink-soft); display:flex; justify-content:space-between; }
+  .rate-note .mono{ color:var(--ink); font-weight:700; }
+
+  /* ---------- totals ---------- */
+  .total-row{ display:flex; justify-content:space-between; align-items:baseline; padding:13px 16px; }
+  .total-row.tone-teal{ background:var(--teal-tint); border-top:2px solid var(--teal); }
+  .total-row.tone-coral{ background:var(--coral-tint); border-top:2px solid var(--coral); }
+  .total-row .label{ font-size:13.5px; font-weight:700; letter-spacing:.02em; }
+  .total-row .value{ font-size:19px; font-weight:700; }
+
+  /* ---------- result ---------- */
+  .result{ text-align:center; padding:24px 16px 6px; }
+  .result-formula{ font-size:11px; color:var(--ink-soft); letter-spacing:.03em; margin-bottom:18px; }
+
+  .face-wrap{ display:flex; justify-content:center; margin-bottom:16px; }
+  .face-badge{
+    width:172px; height:172px; border-radius:50%; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; border:6px solid var(--teal); background:var(--teal-tint);
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1), background .25s, border-color .25s;
+  }
+  .face-badge.pop{ transform:scale(1.07); }
+  .face-badge.tier-mid{ border-color:var(--amber); background:#FFF6E2; }
+  .face-badge.tier-bad{ border-color:var(--coral-dark); background:var(--coral-tint); }
+  .face-emoji{ font-size:52px; line-height:1; margin-bottom:6px; }
+  .face-ritsu{ font-family:'Roboto Mono', monospace; font-size:25px; font-weight:700; color:var(--ink); }
+  .face-caption{
+    font-family:'Zen Maru Gothic', sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.08em;
+    margin-top:3px; color:var(--ink-soft);
+  }
+
+  .figure-row{ display:flex; justify-content:center; align-items:baseline; gap:10px; padding:4px 0 22px; }
+  .figure-row .fig-label{ font-size:13px; color:var(--ink-soft); }
+  .figure-row .figure-value{ font-size:25px; font-weight:700; color:var(--teal-dark); }
+  .figure-row.negative .figure-value{ color:var(--coral-dark); }
+
+  footer{ text-align:center; font-size:10.5px; color:var(--ink-soft); letter-spacing:.05em; padding-top:6px; }
+
+  @media (prefers-reduced-motion: reduce){ .face-badge{ transition:none; } }
+  @media (min-width:600px){ .page{ padding-top:36px; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="title-block">
+      <h1>粗利分析シート</h1>
+      <p>ARARI ANALYSIS SHEET</p>
+    </div>
+    <button id="reset-btn" type="button">リセット</button>
+  </header>
+
+  <div class="mode-tabs">
+    <button type="button" class="mode-tab active" data-mode="gyomu">業務委託</button>
+    <button type="button" class="mode-tab" data-mode="haken">派遣</button>
+  </div>
+
+  <!-- ============ 売上欄 ============ -->
+  <section class="sheet">
+    <div class="sheet-header tone-teal">
+      <span class="idx">01</span>
+      <h2>売上欄</h2>
+    </div>
+    <div class="sheet-body">
+
+      <div class="multi-block">
+        <div class="multi-title">
+          <div class="multi-title-text">
+            <span class="label" id="sale-sv-title">SV単価</span>
+            <span class="formula-caption" id="sale-sv-formula">単価 × 人数</span>
+          </div>
+          <span class="subtotal-total">小計合計　<span class="mono" id="sale-sv-total">¥0</span></span>
+        </div>
+        <div id="sale-sv-rows"></div>
+        <button type="button" class="add-row-btn" data-add="sale-sv">＋ SVの行を追加</button>
+      </div>
+
+      <div class="multi-block">
+        <div class="multi-title">
+          <div class="multi-title-text">
+            <span class="label" id="sale-st-title">ST単価</span>
+            <span class="formula-caption" id="sale-st-formula">単価 × 人数</span>
+          </div>
+          <span class="subtotal-total">小計合計　<span class="mono" id="sale-st-total">¥0</span></span>
+        </div>
+        <div id="sale-st-rows"></div>
+        <button type="button" class="add-row-btn coral" data-add="sale-st">＋ STの行を追加</button>
+      </div>
+
+      <div class="duo-row">
+        <div class="duo-top">
+          <span class="label">交通費</span>
+          <span class="subtotal-total">小計　<span class="mono" id="kotsuhi-rev-subtotal">¥0</span></span>
+        </div>
+        <div class="duo-inputs">
+          <div class="amount-field narrow2">
+            <input type="number" min="0" inputmode="numeric" id="kotsuhi-rev-tanka" placeholder="0" aria-label="交通費単価">
+            <span class="unit">円</span>
+          </div>
+          <span class="mult">×</span>
+          <div class="amount-field" style="width:80px">
+            <input type="number" min="0" inputmode="numeric" id="kotsuhi-rev-ninzu" placeholder="0" aria-label="交通費対象人数">
+            <span class="unit">人</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rate-row">
+        <div class="rate-top">
+          <span class="label">管理費</span>
+        </div>
+        <div class="rate-chips">
+          <button type="button" class="rate-chip active" data-rate="0">0%</button>
+          <button type="button" class="rate-chip" data-rate="5">5%</button>
+          <button type="button" class="rate-chip" data-rate="8">8%</button>
+          <button type="button" class="rate-chip" data-rate="10">10%</button>
+        </div>
+        <div class="rate-note">
+          <span>合計人件費 <span class="mono" id="jinkenhi-total-note">¥0</span> × 選択率</span>
+          <span>管理費 <span class="mono" id="kanrihi-amount">¥0</span></span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <span class="label">他売上</span>
+        <div class="amount-field wide">
+          <input type="number" min="0" inputmode="numeric" id="ta-uriage" placeholder="0" aria-label="他売上">
+          <span class="unit">円</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="total-row tone-teal">
+      <span class="label">売上合計</span>
+      <span class="value mono" id="uriage-goukei">¥0</span>
+    </div>
+  </section>
+
+  <!-- ============ 原価 ============ -->
+  <section class="sheet">
+    <div class="sheet-header tone-coral">
+      <span class="idx">02</span>
+      <h2>原価</h2>
+    </div>
+    <div class="sheet-body">
+
+      <div class="multi-block">
+        <div class="multi-title">
+          <div class="multi-title-text">
+            <span class="label" id="cost-sv-title">SV人件費</span>
+            <span class="formula-caption" id="cost-sv-formula">単価 × 人数</span>
+          </div>
+          <span class="subtotal-total">小計合計　<span class="mono" id="cost-sv-total">¥0</span></span>
+        </div>
+        <div id="cost-sv-rows"></div>
+        <button type="button" class="add-row-btn" data-add="cost-sv">＋ SVの行を追加</button>
+      </div>
+
+      <div class="multi-block">
+        <div class="multi-title">
+          <div class="multi-title-text">
+            <span class="label" id="cost-st-title">ST人件費</span>
+            <span class="formula-caption" id="cost-st-formula">単価 × 人数</span>
+          </div>
+          <span class="subtotal-total">小計合計　<span class="mono" id="cost-st-total">¥0</span></span>
+        </div>
+        <div id="cost-st-rows"></div>
+        <button type="button" class="add-row-btn coral" data-add="cost-st">＋ STの行を追加</button>
+      </div>
+
+      <div class="field-row">
+        <span class="label">交通費</span>
+        <div class="amount-field wide">
+          <input type="number" min="0" inputmode="numeric" id="kotsuhi-cost" placeholder="0" aria-label="交通費(原価)">
+          <span class="unit">円</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <span class="label">その他経費</span>
+        <div class="amount-field wide">
+          <input type="number" min="0" inputmode="numeric" id="sonota-keihi" placeholder="0" aria-label="その他経費">
+          <span class="unit">円</span>
+        </div>
+      </div>
+    </div>
+    <div class="total-row tone-coral">
+      <span class="label">原価合計</span>
+      <span class="value mono" id="genka-goukei">¥0</span>
+    </div>
+  </section>
+
+  <!-- ============ 結果 ============ -->
+  <section class="result">
+    <div class="result-formula">売上合計 − 原価合計 ＝ 粗利額</div>
+    <div class="face-wrap">
+      <div class="face-badge" id="face-badge">
+        <span class="face-emoji" id="face-emoji">😄</span>
+        <span class="face-ritsu" id="arari-ritsu">0.0%</span>
+        <span class="face-caption" id="face-caption">絶好調</span>
+      </div>
+    </div>
+    <div class="figure-row" id="figure-row">
+      <span class="fig-label">粗利額</span>
+      <span class="mono figure-value" id="arari-gaku">¥0</span>
+    </div>
+  </section>
+
+  <footer>粗利率 30%以上=😄　20〜29%=😐　19%以下=😠</footer>
+
+</div>
+
+<script>
+(function(){
+  let nextId = 1;
+  let currentMode = 'gyomu'; // 'gyomu' = 業務委託, 'haken' = 派遣
+  let selectedRate = 0;
+
+  const groups = {
+    'sale-sv': { rows:[{id:nextId++,tanka:'',ninzu:''}], containerId:'sale-sv-rows', totalId:'sale-sv-total', label:'SV', kind:'sv', section:'sale' },
+    'sale-st': { rows:[{id:nextId++,tanka:'',ninzu:''}], containerId:'sale-st-rows', totalId:'sale-st-total', label:'ST', kind:'st', section:'sale' },
+    'cost-sv': { rows:[{id:nextId++,tanka:'',ninzu:''}], containerId:'cost-sv-rows', totalId:'cost-sv-total', label:'SV', kind:'sv', section:'cost' },
+    'cost-st': { rows:[{id:nextId++,tanka:'',ninzu:''}], containerId:'cost-st-rows', totalId:'cost-st-total', label:'ST', kind:'st', section:'cost' }
+  };
+
+  function num(v){
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function formatYen(n){
+    const rounded = Math.round(n);
+    const sign = rounded < 0 ? '\u2212' : '';
+    return sign + '¥' + Math.abs(rounded).toLocaleString('ja-JP');
+  }
+
+  function fieldMeta(){
+    if (currentMode === 'haken') {
+      return { rateUnit:'円/時', qtyUnit:'時間', rateWord:'時給', qtyWord:'稼働時間' };
+    }
+    return { rateUnit:'円', qtyUnit:'人', rateWord:'単価', qtyWord:'人数' };
+  }
+
+  function groupSubtotal(key){
+    return groups[key].rows.reduce(function(s,r){ return s + num(r.tanka) * num(r.ninzu); }, 0);
+  }
+
+  function renderRows(key){
+    const g = groups[key];
+    const meta = fieldMeta();
+    const container = document.getElementById(g.containerId);
+    container.innerHTML = g.rows.map(function(r){
+      const subtotal = num(r.tanka) * num(r.ninzu);
+      return (
+        '<div class="row-line is-' + g.kind + '">' +
+          '<div class="row-inputs">' +
+            '<div class="amount-field" style="width:104px">' +
+              '<input type="number" min="0" inputmode="numeric" class="row-input" data-field="tanka" data-key="' + key + '" data-id="' + r.id + '" value="' + r.tanka + '" placeholder="0" aria-label="' + g.label + meta.rateWord + '">' +
+              '<span class="unit">' + meta.rateUnit + '</span>' +
+            '</div>' +
+            '<span class="mult">×</span>' +
+            '<div class="amount-field" style="width:72px">' +
+              '<input type="number" min="0" inputmode="numeric" class="row-input" data-field="ninzu" data-key="' + key + '" data-id="' + r.id + '" value="' + r.ninzu + '" placeholder="0" aria-label="' + g.label + meta.qtyWord + '">' +
+              '<span class="unit">' + meta.qtyUnit + '</span>' +
+            '</div>' +
+            '<button type="button" class="row-remove" data-remove="' + key + '" data-id="' + r.id + '" aria-label="行を削除"' + (g.rows.length === 1 ? ' disabled' : '') + '>×</button>' +
+          '</div>' +
+          '<div class="row-subtotal">小計　<span class="mono" id="' + key + '-row-subtotal-' + r.id + '">' + formatYen(subtotal) + '</span></div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function updateTitles(){
+    const isHaken = currentMode === 'haken';
+    const formula = isHaken ? '時給 × 稼働時間' : '単価 × 人数';
+    document.getElementById('sale-sv-title').textContent = 'SV' + (isHaken ? '時給' : '単価');
+    document.getElementById('sale-st-title').textContent = 'ST' + (isHaken ? '時給' : '単価');
+    document.getElementById('cost-sv-title').textContent = 'SV人件費';
+    document.getElementById('cost-st-title').textContent = 'ST人件費';
+    document.getElementById('sale-sv-formula').textContent = formula;
+    document.getElementById('sale-st-formula').textContent = formula;
+    document.getElementById('cost-sv-formula').textContent = formula;
+    document.getElementById('cost-st-formula').textContent = formula;
+  }
+
+  function handleRowInput(e){
+    const t = e.target;
+    if (!t.classList.contains('row-input')) return;
+    const key = t.dataset.key;
+    const id = Number(t.dataset.id);
+    const row = groups[key].rows.find(function(r){ return r.id === id; });
+    if (!row) return;
+    row[t.dataset.field] = t.value;
+    const subtotalEl = document.getElementById(key + '-row-subtotal-' + id);
+    if (subtotalEl) subtotalEl.textContent = formatYen(num(row.tanka) * num(row.ninzu));
+    recalcTotals();
+  }
+
+  function handleRowRemove(e){
+    const btn = e.target.closest('[data-remove]');
+    if (!btn || btn.disabled) return;
+    const key = btn.dataset.remove;
+    const id = Number(btn.dataset.id);
+    const g = groups[key];
+    g.rows = g.rows.filter(function(r){ return r.id !== id; });
+    if (g.rows.length === 0) g.rows = [{ id: nextId++, tanka:'', ninzu:'' }];
+    renderRows(key);
+    recalcTotals();
+  }
+
+  Object.keys(groups).forEach(function(key){
+    const g = groups[key];
+    document.getElementById(g.containerId).addEventListener('input', handleRowInput);
+    document.getElementById(g.containerId).addEventListener('click', handleRowRemove);
+  });
+
+  document.querySelectorAll('[data-add]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const key = btn.dataset.add;
+      groups[key].rows.push({ id: nextId++, tanka:'', ninzu:'' });
+      renderRows(key);
+      recalcTotals();
+    });
+  });
+
+  document.querySelectorAll('.rate-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      selectedRate = Number(chip.dataset.rate);
+      document.querySelectorAll('.rate-chip').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      recalcTotals();
+    });
+  });
+
+  document.querySelectorAll('.mode-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      if (tab.classList.contains('active')) return;
+      currentMode = tab.dataset.mode;
+      document.querySelectorAll('.mode-tab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      updateTitles();
+      Object.keys(groups).forEach(renderRows);
+      recalcTotals();
+    });
+  });
+
+  function recalcTotals(){
+    const saleSvTotal = groupSubtotal('sale-sv');
+    const saleStTotal = groupSubtotal('sale-st');
+    const costSvTotal = groupSubtotal('cost-sv');
+    const costStTotal = groupSubtotal('cost-st');
+
+    const kotsuhiRevTanka = num(document.getElementById('kotsuhi-rev-tanka').value);
+    const kotsuhiRevNinzu = num(document.getElementById('kotsuhi-rev-ninzu').value);
+    const kotsuhiRevSubtotal = kotsuhiRevTanka * kotsuhiRevNinzu;
+
+    const jinkenhiTotal = costSvTotal + costStTotal;
+    const kanrihi = jinkenhiTotal * (selectedRate / 100);
+
+    const taUriage = num(document.getElementById('ta-uriage').value);
+
+    const uriageGoukei = saleSvTotal + saleStTotal + kotsuhiRevSubtotal + kanrihi + taUriage;
+
+    const kotsuhiCost = num(document.getElementById('kotsuhi-cost').value);
+    const sonota = num(document.getElementById('sonota-keihi').value);
+    const genkaGoukei = jinkenhiTotal + kotsuhiCost + sonota;
+
+    const arariGaku = uriageGoukei - genkaGoukei;
+    const arariRitsu = uriageGoukei !== 0 ? (arariGaku / uriageGoukei * 100) : 0;
+
+    document.getElementById('sale-sv-total').textContent = formatYen(saleSvTotal);
+    document.getElementById('sale-st-total').textContent = formatYen(saleStTotal);
+    document.getElementById('cost-sv-total').textContent = formatYen(costSvTotal);
+    document.getElementById('cost-st-total').textContent = formatYen(costStTotal);
+    document.getElementById('kotsuhi-rev-subtotal').textContent = formatYen(kotsuhiRevSubtotal);
+    document.getElementById('jinkenhi-total-note').textContent = formatYen(jinkenhiTotal);
+    document.getElementById('kanrihi-amount').textContent = formatYen(kanrihi);
+    document.getElementById('uriage-goukei').textContent = formatYen(uriageGoukei);
+    document.getElementById('genka-goukei').textContent = formatYen(genkaGoukei);
+    document.getElementById('arari-gaku').textContent = formatYen(arariGaku);
+    document.getElementById('arari-ritsu').textContent = arariRitsu.toFixed(1) + '%';
+
+    const badge = document.getElementById('face-badge');
+    const emoji = document.getElementById('face-emoji');
+    const caption = document.getElementById('face-caption');
+    const figureRow = document.getElementById('figure-row');
+
+    let tierClass = '';
+    if (arariRitsu >= 30) {
+      emoji.textContent = '\u{1F604}';
+      caption.textContent = '絶好調';
+      figureRow.classList.remove('negative');
+    } else if (arariRitsu >= 20) {
+      tierClass = 'tier-mid';
+      emoji.textContent = '\u{1F610}';
+      caption.textContent = '標準';
+      figureRow.classList.remove('negative');
+    } else {
+      tierClass = 'tier-bad';
+      emoji.textContent = '\u{1F620}';
+      caption.textContent = '要注意';
+      if (arariGaku < 0) figureRow.classList.add('negative'); else figureRow.classList.remove('negative');
+    }
+    badge.classList.remove('tier-mid','tier-bad');
+    if (tierClass) badge.classList.add(tierClass);
+
+    badge.classList.remove('pop');
+    void badge.offsetWidth;
+    badge.classList.add('pop');
+  }
+
+  ['kotsuhi-rev-tanka','kotsuhi-rev-ninzu','ta-uriage','kotsuhi-cost','sonota-keihi'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', recalcTotals);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    Object.keys(groups).forEach(function(key){
+      groups[key].rows = [{ id: nextId++, tanka:'', ninzu:'' }];
+    });
+    ['kotsuhi-rev-tanka','kotsuhi-rev-ninzu','ta-uriage','kotsuhi-cost','sonota-keihi'].forEach(function(id){
+      document.getElementById(id).value = '';
+    });
+    selectedRate = 0;
+    document.querySelectorAll('.rate-chip').forEach(function(c){ c.classList.remove('active'); });
+    document.querySelector('.rate-chip[data-rate="0"]').classList.add('active');
+
+    currentMode = 'gyomu';
+    document.querySelectorAll('.mode-tab').forEach(function(t){ t.classList.toggle('active', t.dataset.mode === 'gyomu'); });
+    updateTitles();
+
+    Object.keys(groups).forEach(renderRows);
+    recalcTotals();
+  });
+
+  updateTitles();
+  Object.keys(groups).forEach(renderRows);
+  recalcTotals();
+})();
+</script>
+</body>
+</html>
