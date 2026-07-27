@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>わたしの一枚 | Credit Card Matcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0A101C;
+    --bg-mid:#111B2C;
+    --panel:rgba(255,255,255,.045);
+    --panel-strong:rgba(255,255,255,.07);
+    --border:rgba(255,255,255,.09);
+    --border-soft:rgba(255,255,255,.06);
+    --gold:#C9A227;
+    --gold-soft:#E8CD7A;
+    --text:#F2EFE6;
+    --text-mute:#93A0B4;
+    --text-faint:#5E6A7E;
+    --emerald:#37A47F;
+    --coral:#E2604F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 500px at 50% -8%, #1B2A45 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 45%, #0A0F19 100%);
+    min-height:100vh;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    color:var(--text);
+    padding:26px 14px 70px;
+    display:flex;
+    justify-content:center;
+  }
+  .shell{ width:100%; max-width:460px; }
+
+  /* ---------- hero ---------- */
+  .hero{ text-align:center; padding:4px 6px 26px; }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.32em;
+    color:var(--gold-soft); text-transform:uppercase;
+  }
+  .hero h1{
+    font-family:'Shippori Mincho', serif; font-weight:800; font-size:32px;
+    margin:10px 0 8px; letter-spacing:.03em;
+    background:linear-gradient(180deg, #FFFFFF 0%, #C9D2E0 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{ margin:0 0 22px; font-size:13.5px; color:var(--text-mute); line-height:1.75; padding:0 6px; }
+
+  /* ---------- gallery (hero card art strip) ---------- */
+  .gallery{
+    display:flex; gap:12px; overflow-x:auto; padding:6px 4px 14px;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+  }
+  .gallery::-webkit-scrollbar{ height:4px; }
+  .gallery::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+  .gallery .g-item{ flex:0 0 158px; scroll-snap-align:start; }
+  .gallery .card-svg{ width:100%; display:block; filter:drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
+  .gallery .g-name{ font-size:10.5px; color:var(--text-faint); text-align:center; margin-top:8px; letter-spacing:.02em; }
+
+  .start-btn{
+    display:block; width:100%; padding:15px; border:none; border-radius:12px;
+    background:linear-gradient(135deg, var(--gold-soft), var(--gold));
+    color:#221A05; font-family:'Zen Kaku Gothic New', sans-serif; font-weight:900; font-size:15px;
+    cursor:pointer; box-shadow:0 10px 26px rgba(201,162,39,.25);
+    letter-spacing:.02em;
+  }
+  .start-btn:active{ transform:scale(.98); }
+
+  /* ---------- panel ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:24px 20px 22px;
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+  }
+  .panel.hidden{ display:none; }
+
+  /* ---------- progress ---------- */
+  .progress{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:24px; }
+  .progress .dot{
+    width:24px;height:24px;border-radius:50%;
+    border:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700;
+    color:var(--text-faint); background:transparent; transition:all .25s ease;
+  }
+  .progress .dot.done{ border-color:var(--emerald); color:#0A0F19; background:var(--emerald); }
+  .progress .dot.active{ border-color:var(--gold); color:var(--gold-soft); box-shadow:0 0 0 4px rgba(201,162,39,.14); }
+  .progress .line{ width:14px; height:1px; background:var(--border); }
+
+  .step{ display:none; }
+  .step.show{ display:block; animation:fadein .35s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  .step-label{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.16em; color:var(--gold-soft); margin-bottom:8px; text-transform:uppercase; }
+  .step h2{ font-family:'Shippori Mincho', serif; font-size:20px; margin:0 0 6px; line-height:1.55; color:var(--text); }
+  .step .sub{ font-size:12.5px; color:var(--text-mute); margin:0 0 20px; line-height:1.7; }
+
+  .opt{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    padding:14px 16px; margin-bottom:9px;
+    border:1px solid var(--border); border-radius:12px;
+    background:var(--panel);
+    font-family:'Zen Kaku Gothic New', sans-serif; font-size:14px; font-weight:500;
+    color:var(--text); cursor:pointer; transition:border-color .15s, background .15s, box-shadow .15s;
+  }
+  .opt .mark{ width:18px;height:18px;border-radius:50%; border:1.5px solid var(--border); flex:none; position:relative; }
+  .opt.checkbox .mark{ border-radius:5px; }
+  .opt.selected{ border-color:var(--gold); background:rgba(201,162,39,.10); box-shadow:0 0 0 1px rgba(201,162,39,.15) inset; }
+  .opt.selected .mark{ border-color:var(--gold); background:var(--gold); }
+  .opt.selected .mark::after{ content:"✓"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#221A05; font-size:11px; font-weight:900; }
+
+  .slider-wrap{ margin:18px 0 6px; }
+  .slider-value{ font-family:'JetBrains Mono', monospace; font-size:27px; font-weight:700; color:var(--gold-soft); text-align:center; margin-bottom:14px; }
+  input[type=range]{
+    -webkit-appearance:none; width:100%; height:5px; border-radius:4px; outline:none; background:var(--border);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:linear-gradient(135deg, var(--gold-soft), var(--gold)); border:2px solid #0A0F19;
+    box-shadow:0 2px 8px rgba(0,0,0,.4); cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg, var(--gold-soft), var(--gold));
+    border:2px solid #0A0F19; cursor:pointer;
+  }
+  .slider-labels{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); margin-top:6px; }
+
+  .nav-row{ display:flex; gap:10px; margin-top:22px; }
+  .btn{ flex:1; padding:14px 10px; border-radius:12px; border:none; cursor:pointer; font-family:'Zen Kaku Gothic New', sans-serif; font-weight:800; font-size:14px; transition:transform .12s ease, opacity .12s; }
+  .btn:active{ transform:scale(.97); }
+  .btn.primary{ background:linear-gradient(135deg, var(--gold-soft), var(--gold)); color:#221A05; }
+  .btn.primary:disabled{ opacity:.3; cursor:not-allowed; }
+  .btn.ghost{ background:transparent; color:var(--text-mute); border:1px solid var(--border); flex:0 0 88px; }
+
+  /* ---------- results ---------- */
+  .result-head{ text-align:center; margin-bottom:20px; }
+  .result-head .step-label{ text-align:center; }
+  .result-head h2{ font-size:19px; }
+
+  .card-slip{ position:relative; border:1px solid var(--border); border-radius:16px; background:var(--panel-strong); padding:16px; margin-bottom:18px; }
+  .card-slip.rank1{ border-color:var(--gold); box-shadow:0 0 0 1px rgba(201,162,39,.25), 0 20px 40px rgba(201,162,39,.08); }
+
+  .art-wrap{ position:relative; margin-bottom:14px; }
+  .art-wrap .card-svg{ width:100%; display:block; border-radius:14px; filter:drop-shadow(0 14px 22px rgba(0,0,0,.5)); }
+  .badge{
+    position:absolute; top:-8px; right:10px; padding:5px 10px; border-radius:100px;
+    background:linear-gradient(135deg, var(--gold-soft), var(--gold)); color:#221A05;
+    font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:800; letter-spacing:.06em;
+    transform:rotate(-4deg); box-shadow:0 6px 14px rgba(201,162,39,.4);
+  }
+
+  .rank-row{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
+  .rank-num{ font-family:'JetBrains Mono', monospace; color:var(--gold-soft); font-weight:700; font-size:12px; letter-spacing:.05em; }
+  .card-name{ font-family:'Shippori Mincho', serif; font-size:17px; font-weight:700; color:var(--text); }
+  .card-meta{ font-size:11.5px; color:var(--text-mute); margin:2px 0 4px; }
+  .age-note{ font-size:11px; color:var(--coral); margin:2px 0 8px; }
+
+  .est-row{ display:flex; align-items:baseline; gap:6px; margin:12px 0 14px; padding:12px 14px; background:rgba(0,0,0,.25); border:1px solid var(--border-soft); border-radius:10px; }
+  .est-row .lbl{ font-size:11px; color:var(--text-mute); }
+  .est-row .num{ font-family:'JetBrains Mono', monospace; color:var(--emerald); font-size:21px; font-weight:700; margin-left:auto; }
+  .est-row .unit{ font-size:10.5px; color:var(--text-mute); }
+
+  .ledger-line{ display:flex; align-items:baseline; gap:6px; font-size:12.5px; padding:4px 0; }
+  .ledger-line .cat{ white-space:nowrap; color:var(--text); }
+  .ledger-line .fill{ flex:1; border-bottom:1.5px dotted var(--border); margin:0 4px; transform:translateY(-3px); }
+  .ledger-line .pct{ font-family:'JetBrains Mono', monospace; font-weight:700; white-space:nowrap; color:var(--gold-soft); }
+
+  .card-note{ font-size:12px; color:var(--text-mute); line-height:1.75; margin-top:12px; }
+  .card-official{ font-size:11px; color:var(--text-faint); margin-top:10px; }
+  .card-official span{ font-family:'JetBrains Mono', monospace; color:var(--emerald); }
+
+  .others-title{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.1em; color:var(--text-faint); margin:20px 0 8px; text-transform:uppercase; }
+  .other-line{ display:flex; justify-content:space-between; font-size:12.5px; padding:8px 2px; border-bottom:1px dotted var(--border-soft); }
+  .other-line .n{ color:var(--text); font-weight:500; }
+  .other-line .r{ font-family:'JetBrains Mono', monospace; color:var(--text-mute); }
+
+  .disclaimer{ font-size:10.6px; color:var(--text-faint); line-height:1.85; margin-top:22px; padding-top:16px; border-top:1px dotted var(--border-soft); }
+  .restart{ margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="hero">
+    <div class="eyebrow">Credit Card Matcher</div>
+    <h1>わたしの一枚</h1>
+    <p>使い方を教えてください。あなたに合うクレジットカードを診断します。</p>
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <div class="panel" id="quizPanel">
+    <div class="progress" id="progress"></div>
+
+    <!-- STEP 1: priority -->
+    <section class="step" data-step="1">
+      <div class="step-label">Q1 / 4</div>
+      <h2>カード選びで、一番重視したいことは？</h2>
+      <p class="sub">まずはあなたの価値観を教えてください。</p>
+      <div id="opts-priority"></div>
+      <div class="nav-row">
+        <button class="btn ghost" disabled>戻る</button>
+        <button class="btn primary" id="next1" disabled>次へ</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: categories -->
+    <section class="step" data-step="2">
+      <div class="step-label">Q2 / 4</div>
+      <h2>よく使うお店・支払いは？</h2>
+      <p class="sub">当てはまるものをすべて選んでください（複数可）。</p>
+      <div id="opts-categories"></div>
+      <div class="nav-row">
+        <button class="btn ghost" id="back2">戻る</button>
+        <button class="btn primary" id="next2" disabled>次へ</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: annual spend -->
+    <section class="step" data-step="3">
+      <div class="step-label">Q3 / 4</div>
+      <h2>年間のカード利用額は、だいたいどれくらい？</h2>
+      <p class="sub">ざっくりで大丈夫です。獲得ポイントの目安計算に使います。</p>
+      <div class="slider-wrap">
+        <div class="slider-value" id="spendValue">100万円</div>
+        <input type="range" id="spendSlider" min="300000" max="3000000" step="100000" value="1000000">
+        <div class="slider-labels"><span>30万円</span><span>300万円+</span></div>
+      </div>
+      <div class="nav-row">
+        <button class="btn ghost" id="back3">戻る</button>
+        <button class="btn primary" id="next3">次へ</button>
+      </div>
+    </section>
+
+    <!-- STEP 4: age -->
+    <section class="step" data-step="4">
+      <div class="step-label">Q4 / 4</div>
+      <h2>年齢を教えてください</h2>
+      <p class="sub">一部のカードは申込時の年齢に条件があるため、確認させてください。</p>
+      <div id="opts-age"></div>
+      <div class="nav-row">
+        <button class="btn ghost" id="back4">戻る</button>
+        <button class="btn primary" id="next4" disabled>診断する</button>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="step" data-step="5">
+      <div class="result-head">
+        <div class="step-label">Result</div>
+        <h2>あなたへのおすすめは、こちら</h2>
+      </div>
+      <div id="results"></div>
+      <div class="nav-row restart">
+        <button class="btn ghost" id="restart" style="flex:1;">最初から選び直す</button>
+      </div>
+      <div class="disclaimer">
+        本アプリの還元率・年会費等の情報は2026年7月時点で公開されている各社公式サイト・比較サイトの情報をもとにした概算であり、実際の条件と異なる場合があります。カードの絵柄は実際のデザインではなく、本アプリ独自のイメージ図です。ホテル系提携カード（マリオットボンヴォイ／ヒルトン・オナーズ）やアメックス・ゴールドの「還元率」は、ポイントを現金と同等に換算した場合の目安であり、実際の価値は宿泊やマイル交換など使い方によって変動します。診断結果は入力した年間利用額に対する年会費の負担も加味して順位づけしていますが、実際の損得は特典の使いこなし方次第で変わります。ポイント制度は各社の都合により予告なく変更されることがあります。特定カードへの入会を勧誘するものではありません。お申し込みの際は、必ず各カード会社の公式サイトで最新の情報をご確認のうえ、ご自身の判断と責任で行ってください。本アプリは診断の参考情報を提供するものであり、金融アドバイスではありません。
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const CATS = [
+  {key:'conveni', label:'コンビニ・スーパー'},
+  {key:'net',     label:'ネットショッピング（Amazon/楽天等）'},
+  {key:'dining',  label:'外食'},
+  {key:'transit', label:'交通系ICカード / 電車'},
+  {key:'gas',     label:'ガソリンスタンド'},
+  {key:'mobile',  label:'携帯代・公共料金'},
+];
+
+const PRIORITIES = [
+  {key:'balance', label:'総合的なバランス重視'},
+  {key:'rate',    label:'ポイント還元率重視'},
+  {key:'fee',     label:'年会費無料重視'},
+  {key:'travel',  label:'マイル・旅行特典重視'},
+];
+
+const AGES = [
+  {key:'young', label:'18〜39歳'},
+  {key:'old',   label:'40歳以上'},
+];
+
+const CARDS = [
+  {
+    id:'smbc_nl', name:'三井住友カード（NL）', brand:'Visa／Mastercard', fee:'永年無料', feeValue:0, ageMax:null,
+    rates:{conveni:7.0, net:0.5, dining:5.0, transit:0.5, gas:0.5, mobile:0.5}, travel:3,
+    note:'セブン-イレブン・ローソン・マクドナルドなど対象店で、スマホのタッチ決済（Apple Pay／Google Pay）を使うと還元率が7%前後まで上がるのが最大の特徴。通常の買い物やネット通販は0.5%とやや低め。',
+    official:'smbc-card.com'
+  },
+  {
+    id:'rakuten', name:'楽天カード', brand:'Visa／Mastercard／JCB／AMEX', fee:'永年無料', feeValue:0, ageMax:null,
+    rates:{conveni:1.0, net:3.0, dining:1.0, transit:1.0, gas:1.0, mobile:1.0}, travel:2,
+    note:'通常還元率1％で、年会費無料カードの中でも高水準。楽天市場・楽天ブックスでは3％以上に上がる。貯まった楽天ポイントは使い道が広く、審査も比較的やさしいので最初の1枚にも人気。',
+    official:'rakuten-card.co.jp'
+  },
+  {
+    id:'dcard', name:'dカード', brand:'Visa／Mastercard', fee:'永年無料', feeValue:0, ageMax:null,
+    rates:{conveni:1.0, net:1.0, dining:2.0, transit:1.0, gas:1.0, mobile:1.0}, travel:1,
+    note:'通常還元率1％。マツモトキヨシやスターバックスなど特約店では最大4〜7％。貯まったdポイントは携帯電話料金の支払いに充当でき、ドコモ回線を持っていなくても申込可能。',
+    official:'dcard.docomo.ne.jp'
+  },
+  {
+    id:'jcbw', name:'JCB CARD W', brand:'JCB', fee:'永年無料', feeValue:0, ageMax:39,
+    rates:{conveni:2.0, net:2.0, dining:4.0, transit:1.0, gas:1.0, mobile:1.0}, travel:2,
+    note:'通常のJCBカードの2倍にあたる還元率1％が常時適用。Amazonやセブン-イレブン、スターバックスなど提携店ではさらに還元率がアップする。申込は18〜39歳限定（保有は40歳以降も継続可）。',
+    official:'jcb.co.jp'
+  },
+  {
+    id:'biccamera', name:'ビックカメラSuicaカード', brand:'JCB／Visa', fee:'初年度無料・2年目以降524円（年1回利用で無料）', feeValue:0, ageMax:null,
+    rates:{conveni:1.0, net:1.0, dining:1.0, transit:1.5, gas:1.0, mobile:1.0}, travel:2,
+    note:'通常還元率1％。モバイルSuicaへのチャージで1.5％、定期券購入では還元率がさらに上がる。電車通勤・通学でSuicaをよく使う人と相性がよいカード。',
+    official:'jreast.co.jp'
+  },
+  {
+    id:'paypay', name:'PayPayカード', brand:'Visa／Mastercard／JCB', fee:'永年無料', feeValue:0, ageMax:null,
+    rates:{conveni:1.0, net:5.0, dining:1.0, transit:1.0, gas:1.0, mobile:1.0}, travel:1,
+    note:'通常還元率1％。Yahoo!ショッピングやLOHACOでは最大5％相当まで上がる。PayPay残高へのクレジットチャージに対応する数少ないカードで、PayPay経済圏との相性がよい。',
+    official:'paypay-card.co.jp'
+  },
+  {
+    id:'marriott', name:'マリオットボンヴォイ アメリカン・エキスプレス・カード', shortName:'Marriott Bonvoy Amex', brand:'American Express', fee:'23,100円（税込）', feeValue:23100, ageMax:null,
+    rates:{conveni:2.0, net:2.0, dining:2.0, transit:2.0, gas:2.0, mobile:2.0}, travel:5,
+    note:'年会費はかかるが、マリオット・ボンヴォイの「ゴールドエリート」資格が自動付帯し、系列ホテル宿泊時の部屋アップグレードやレイトチェックアウトが受けられる。貯まったポイントはANA・JALなど提携航空会社のマイルにも交換可能。ポイントの実質価値はホテル宿泊での使い方によって変わるため、還元率はあくまで目安。',
+    official:'americanexpress.com'
+  },
+  {
+    id:'hilton', name:'ヒルトン・オナーズ アメリカン・エキスプレス・カード', shortName:'Hilton Honors Amex', brand:'American Express', fee:'16,500円（税込）', feeValue:16500, ageMax:null,
+    rates:{conveni:3.0, net:3.0, dining:3.0, transit:3.0, gas:3.0, mobile:3.0}, travel:4,
+    note:'年会費はかかるが、ヒルトン・オナーズの「ゴールド」ステータスが無条件で自動付帯し、国内外のヒルトン系列ホテルで朝食無料や部屋のアップグレードが受けられる。継続利用でウィークエンド無料宿泊特典も。ポイントの実質価値はホテル宿泊での使い方によって変わるため、還元率はあくまで目安。',
+    official:'americanexpress.com'
+  },
+  {
+    id:'amexgold', name:'アメリカン・エキスプレス・ゴールド・カード', shortName:'Amex ゴールド', brand:'American Express', fee:'31,900円（税込）', feeValue:31900, ageMax:null,
+    rates:{conveni:1.0, net:1.0, dining:1.0, transit:1.0, gas:1.0, mobile:1.0}, travel:3,
+    note:'空港ラウンジの無料利用や手厚い旅行保険、ホテル優待など、日常と旅行の両方で使える定番ゴールドカード。上位の「ゴールド・プリファード・カード」（年会費39,600円）ならプライオリティ・パスなど特典がさらに充実。',
+    official:'americanexpress.com'
+  },
+];
+
+/* ---------------- CARD ART (original stylized illustrations, not real card designs) ---------------- */
+const ART = {
+  smbc_nl:   {from:'#0C3B33', to:'#1E6E58', mono:'NL'},
+  rakuten:   {from:'#7A0E1E', to:'#20130F', mono:'楽'},
+  dcard:     {from:'#5B1240', to:'#8A2F62', mono:'d'},
+  jcbw:      {from:'#0E2A52', to:'#1E4C8C', mono:'W'},
+  biccamera: {from:'#0D4A32', to:'#1D7950', mono:'IC'},
+  paypay:    {from:'#9A1B31', to:'#D1483C', mono:'Pay'},
+  marriott:  {from:'#5B0F1D', to:'#28090F', mono:'M'},
+  hilton:    {from:'#0B2A4A', to:'#123B63', mono:'H'},
+  amexgold:  {from:'#8C6A22', to:'#443210', mono:'G'},
+};
+
+function nameFontSize(name){
+  const len = [...name].length;
+  if (len <= 6) return 19;
+  if (len <= 11) return 16;
+  return 13.5;
+}
+
+function cardArt(card){
+  const s = ART[card.id];
+  const label = card.shortName || card.name;
+  const fs = nameFontSize(label);
+  return `
+  <svg viewBox="0 0 344 217" class="card-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${card.name}のイメージ">
+    <defs>
+      <linearGradient id="g_${card.id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${s.from}"/>
+        <stop offset="1" stop-color="${s.to}"/>
+      </linearGradient>
+      <radialGradient id="sh_${card.id}" cx="16%" cy="10%" r="80%">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.24"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+      </radialGradient>
+      <pattern id="pt_${card.id}" width="9" height="9" patternTransform="rotate(35)" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="0" x2="0" y2="9" stroke="#ffffff" stroke-opacity="0.05" stroke-width="5"/>
+      </pattern>
+    </defs>
+    <rect x="1" y="1" width="342" height="215" rx="18" fill="url(#g_${card.id})"/>
+    <rect x="1" y="1" width="342" height="215" rx="18" fill="url(#pt_${card.id})"/>
+    <rect x="1" y="1" width="342" height="215" rx="18" fill="url(#sh_${card.id})"/>
+    <rect x="1.5" y="1.5" width="341" height="214" rx="17.5" fill="none" stroke="#ffffff" stroke-opacity="0.15"/>
+
+    <g transform="translate(26,84)">
+      <rect width="42" height="32" rx="6" fill="#E9CD7E"/>
+      <rect x="4" y="4" width="34" height="24" rx="3" fill="none" stroke="#8a6b1f" stroke-width="1.1" opacity="0.55"/>
+      <line x1="14" y1="4" x2="14" y2="28" stroke="#8a6b1f" stroke-width="1" opacity="0.45"/>
+      <line x1="28" y1="4" x2="28" y2="28" stroke="#8a6b1f" stroke-width="1" opacity="0.45"/>
+      <line x1="4" y1="16" x2="38" y2="16" stroke="#8a6b1f" stroke-width="1" opacity="0.45"/>
+    </g>
+
+    <g transform="translate(304,34)" stroke="#ffffff" stroke-opacity="0.85" fill="none" stroke-linecap="round" stroke-width="3">
+      <path d="M -2 -18 A 18 18 0 0 1 -2 18"/>
+      <path d="M -2 -11 A 11 11 0 0 1 -2 11"/>
+      <path d="M -2 -4 A 4 4 0 0 1 -2 4"/>
+    </g>
+
+    <text x="26" y="160" font-family="'Shippori Mincho', serif" font-size="${fs}" font-weight="700" fill="#F7F3E7">${label}</text>
+    <text x="26" y="181" font-family="'JetBrains Mono', monospace" font-size="10" letter-spacing="1.4" fill="#F7F3E7" opacity="0.72">${card.brand.toUpperCase()}</text>
+
+    <g transform="translate(302,182)">
+      <circle r="19" fill="#ffffff" fill-opacity="0.09" stroke="#ffffff" stroke-opacity="0.35"/>
+      <text text-anchor="middle" dy="5" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#F7F3E7">${s.mono}</text>
+    </g>
+  </svg>`;
+}
+
+/* ---------------- gallery ---------------- */
+function renderGallery(){
+  const g = document.getElementById('gallery');
+  g.innerHTML = CARDS.map(c => `
+    <div class="g-item">
+      ${cardArt(c)}
+      <div class="g-name">${c.name}</div>
+    </div>
+  `).join('');
+}
+
+/* ---------------- STATE ---------------- */
+const state = { priority:null, categories:[], spend:1000000, age:null };
+let currentStep = 1;
+const totalSteps = 5;
+
+/* ---------------- RENDER: option lists ---------------- */
+function renderOptions(containerId, items, {multi=false, selectedGetter, onToggle}){
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  items.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.type='button';
+    btn.className = 'opt' + (multi?' checkbox':'');
+    btn.innerHTML = `<span class="mark"></span><span>${item.label}</span>`;
+    if (selectedGetter(item.key)) btn.classList.add('selected');
+    btn.addEventListener('click', ()=>{ onToggle(item.key); });
+    c.appendChild(btn);
+  });
+}
+
+function refreshStep1(){
+  renderOptions('opts-priority', PRIORITIES, {
+    selectedGetter:(k)=> state.priority===k,
+    onToggle:(k)=>{ state.priority=k; refreshStep1(); document.getElementById('next1').disabled=false; }
+  });
+}
+function refreshStep2(){
+  renderOptions('opts-categories', CATS, {
+    multi:true,
+    selectedGetter:(k)=> state.categories.includes(k),
+    onToggle:(k)=>{
+      const i = state.categories.indexOf(k);
+      if (i>=0) state.categories.splice(i,1); else state.categories.push(k);
+      refreshStep2();
+      document.getElementById('next2').disabled = state.categories.length===0;
+    }
+  });
+}
+function refreshStep4(){
+  renderOptions('opts-age', AGES, {
+    selectedGetter:(k)=> state.age===k,
+    onToggle:(k)=>{ state.age=k; refreshStep4(); document.getElementById('next4').disabled=false; }
+  });
+}
+
+/* ---------------- STEP NAV ---------------- */
+function goTo(step){
+  currentStep = step;
+  document.querySelectorAll('.step').forEach(s=>{
+    s.classList.toggle('show', Number(s.dataset.step)===step);
+  });
+  renderProgress();
+  if (step===5) renderResults();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function renderProgress(){
+  const p = document.getElementById('progress');
+  p.innerHTML='';
+  for(let i=1;i<=totalSteps-1;i++){
+    const d = document.createElement('div');
+    d.className='dot' + (i<currentStep?' done':'') + (i===currentStep?' active':'');
+    d.textContent = i<currentStep ? '済' : i;
+    p.appendChild(d);
+    if (i<totalSteps-1){
+      const line=document.createElement('div'); line.className='line'; p.appendChild(line);
+    }
+  }
+}
+
+document.getElementById('next1').addEventListener('click', ()=> goTo(2));
+document.getElementById('back2').addEventListener('click', ()=> goTo(1));
+document.getElementById('next2').addEventListener('click', ()=> goTo(3));
+document.getElementById('back3').addEventListener('click', ()=> goTo(2));
+document.getElementById('next3').addEventListener('click', ()=> goTo(4));
+document.getElementById('back4').addEventListener('click', ()=> goTo(3));
+document.getElementById('next4').addEventListener('click', ()=> goTo(5));
+document.getElementById('restart').addEventListener('click', ()=>{
+  state.priority=null; state.categories=[]; state.spend=1000000; state.age=null;
+  document.getElementById('spendSlider').value=1000000;
+  updateSpendLabel();
+  document.getElementById('next1').disabled=true;
+  document.getElementById('next2').disabled=true;
+  document.getElementById('next4').disabled=true;
+  refreshStep1(); refreshStep2(); refreshStep4();
+  goTo(1);
+});
+
+const spendSlider = document.getElementById('spendSlider');
+function updateSpendLabel(){
+  const v = Number(spendSlider.value);
+  state.spend = v;
+  const man = Math.round(v/10000);
+  document.getElementById('spendValue').textContent = (v>=3000000? '300万円以上' : man.toLocaleString('ja-JP')+'万円');
+}
+spendSlider.addEventListener('input', updateSpendLabel);
+
+/* ---------------- SCORING ---------------- */
+function scoreCard(card, categories, priority, spend){
+  const cats = categories.length? categories : CATS.map(c=>c.key);
+  const rateList = cats.map(k=> card.rates[k]);
+  const avg = rateList.reduce((a,b)=>a+b,0)/rateList.length;
+  const min = Math.min(...rateList);
+  const feeFree = card.feeValue===0 ? 1:0;
+  // net out the annual fee as a percentage-of-spend drag, so a card with a real
+  // annual fee only ranks well once the person's spend can actually justify it
+  const feeDrag = (card.feeValue / Math.max(spend,1)) * 100;
+  const netAvg = avg - feeDrag;
+  const netMin = min - feeDrag;
+  const balanceScore = netAvg*0.7 + netMin*0.3;
+  const rateScore = netAvg;
+  const feeScore = netAvg + (feeFree?0.3:0);
+  const travelScore = netAvg*0.3 + card.travel*1.5;
+  let score;
+  if (priority==='rate') score=rateScore;
+  else if (priority==='fee') score=feeScore;
+  else if (priority==='travel') score=travelScore;
+  else score=balanceScore;
+  return {avg, min, score};
+}
+
+function renderResults(){
+  const eligible = CARDS.filter(c => !(state.age==='old' && c.ageMax));
+  const scored = eligible.map(c=>{
+    const s = scoreCard(c, state.categories, state.priority, state.spend);
+    return {card:c, ...s};
+  }).sort((a,b)=> b.score - a.score);
+
+  const top = scored.slice(0,3);
+  const rest = scored.slice(3);
+
+  const catLabel = k => CATS.find(c=>c.key===k).label;
+  const container = document.getElementById('results');
+  container.innerHTML='';
+
+  top.forEach((entry, idx)=>{
+    const est = Math.round(state.spend * (entry.avg/100) / 100) * 100;
+    const slip = document.createElement('div');
+    slip.className = 'card-slip' + (idx===0?' rank1':'');
+
+    const badgeHtml = idx===0 ? `<div class="badge">一番のおすすめ</div>` : '';
+
+    const catsToShow = state.categories.length? state.categories : ['conveni','net','dining','transit','gas','mobile'];
+    const ledgerLines = catsToShow.map(k=>{
+      return `<div class="ledger-line"><span class="cat">${catLabel(k)}</span><span class="fill"></span><span class="pct">${entry.card.rates[k].toFixed(1)}%</span></div>`;
+    }).join('');
+
+    const ageNote = entry.card.ageMax ? `<div class="age-note">※申込は18〜${entry.card.ageMax}歳限定（保有は継続可）</div>` : '';
+
+    slip.innerHTML = `
+      <div class="art-wrap">${cardArt(entry.card)}${badgeHtml}</div>
+      <div class="rank-row"><span class="rank-num">No.${idx+1}</span></div>
+      <div class="card-name">${entry.card.name}</div>
+      <div class="card-meta">${entry.card.brand} ｜ 年会費：${entry.card.fee}</div>
+      ${ageNote}
+      <div class="est-row">
+        <span class="lbl">年間の獲得ポイント目安</span>
+        <span class="num">¥${est.toLocaleString('ja-JP')}</span>
+        <span class="unit">相当/年</span>
+      </div>
+      <div class="ledger-lines">${ledgerLines}</div>
+      <div class="card-note">${entry.card.note}</div>
+      <div class="card-official">公式サイト： <span>${entry.card.official}</span></div>
+    `;
+    container.appendChild(slip);
+  });
+
+  if (rest.length){
+    const title = document.createElement('div');
+    title.className='others-title';
+    title.textContent='その他の候補';
+    container.appendChild(title);
+    rest.forEach(entry=>{
+      const line=document.createElement('div');
+      line.className='other-line';
+      line.innerHTML = `<span class="n">${entry.card.name}</span><span class="r">平均 ${entry.avg.toFixed(1)}%</span>`;
+      container.appendChild(line);
+    });
+  }
+}
+
+/* ---------------- INIT ---------------- */
+renderGallery();
+refreshStep1();
+refreshStep2();
+refreshStep4();
+updateSpendLabel();
+goTo(1);
+</script>
+</body>
+</html>
